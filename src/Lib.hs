@@ -1,20 +1,15 @@
 module Lib where
 
+import Data.Maybe
+import Text.Read
+
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
 
 question :: IO (Maybe Int)
 question = do
-  putStr "Give me a positive integer: "
-  input <- getLine
-  let val = read input
-  if val > 0
-    then do
-      putStrLn "Good choice!"
-      return $ Just val
-    else do
-      putStrLn "Wrong!"
-      return Nothing
+  putStr "Give me an integer: "
+  readMaybe <$> getLine
 
 retry :: (Monad m, HasLogFunc m) => Int -> m (Maybe a) -> m (Maybe a)
 retry n action = action >>= go 1
