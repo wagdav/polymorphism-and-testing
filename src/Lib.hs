@@ -1,6 +1,4 @@
-module Lib
-  ( someFunc
-  ) where
+module Lib where
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -18,7 +16,7 @@ question = do
       putStrLn "Wrong!"
       return Nothing
 
-retry :: Int -> IO (Maybe a) -> IO (Maybe a)
+retry :: (Monad m, HasLogFunc m) => Int -> m (Maybe a) -> m (Maybe a)
 retry n action = action >>= go 1
   where
     go i res =
@@ -27,7 +25,13 @@ retry n action = action >>= go 1
           if i > n
             then return res
             else do
-              putStrLn $ "Retrying " <> show i <> "/" <> show n
+              logInfo $ "Retrying " <> show i <> "/" <> show n
               res' <- action
               go (i + 1) res'
         _ -> return res
+
+class HasLogFunc env where
+  logInfo :: String -> env ()
+
+instance HasLogFunc IO where
+  logInfo = putStrLn
