@@ -1,5 +1,6 @@
 module Lib where
 
+import Control.Concurrent
 import Data.Maybe
 import Text.Read
 
@@ -10,7 +11,7 @@ question = do
 
 -- Retry the provided action the given number of times
 retry ::
-     (Monad m, HasLogFunc m)
+     (Monad m, HasLogFunc m, HasDelay m)
   => Int -- ^ number of times to retry
   -> m (Maybe a) -- ^ action to retry
   -> m (Maybe a)
@@ -22,7 +23,11 @@ retry n action = action >>= go 1
           if i > n
             then return res
             else do
-              logInfo $ "Retrying " <> show i <> "/" <> show n
+              let dt = min 9 (i * i)
+              logInfo $
+                "Retrying in " <> show dt <> " seconds " <> show i <> "/" <>
+                show n
+              delaySeconds dt
               res' <- action
               go (i + 1) res'
         _ -> return res
@@ -30,5 +35,11 @@ retry n action = action >>= go 1
 class HasLogFunc env where
   logInfo :: String -> env ()
 
+class HasDelay env where
+  delaySeconds :: Int -> env ()
+
 instance HasLogFunc IO where
   logInfo = putStrLn
+
+instance HasDelay IO where
+  delaySeconds n = threadDelay (n * 1000000)
