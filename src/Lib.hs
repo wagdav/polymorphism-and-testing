@@ -17,20 +17,17 @@ retry ::
   -> m (Maybe a)
 retry n action = action >>= go 1
   where
-    go i res =
-      case res of
-        Nothing ->
-          if i > n
-            then return res
-            else do
-              let dt = min 9 (i * i)
-              logInfo $
-                "Retrying in " <> show dt <> " seconds " <> show i <> "/" <>
-                show n
-              delaySeconds dt
-              res' <- action
-              go (i + 1) res'
-        _ -> return res
+    go i (Just r) = return (Just r)
+    go i Nothing =
+      if i > n
+        then return Nothing
+        else do
+          let dt = min 9 (i * i)
+          logInfo $
+            "Retrying in " <> show dt <> " seconds " <> show i <> "/" <> show n
+          delaySeconds dt
+          res' <- action
+          go (i + 1) res'
 
 class HasLogFunc env where
   logInfo :: String -> env ()
